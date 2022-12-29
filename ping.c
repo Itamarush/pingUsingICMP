@@ -126,7 +126,7 @@ int main()
         gettimeofday(&end, 0);
         char reply[IP_MAXPACKET];
         memcpy(reply, packet + ICMP_HDRLEN + IP4_HDRLEN, datalen);
-        printf("%d bytes from 8.8.8.8: icmp_seq=%d ttl=%d time=%f\n", bytes_received, counter, x, time_diff(&start, &end));
+        printf("%d bytes from 8.8.8.8: icmp_seq=%d time=%f\n", bytes_received, counter, time_diff(&start, &end));
         counter++;
     }
     
