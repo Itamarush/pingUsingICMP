@@ -29,7 +29,7 @@ int main()
 //########## Setting the parametes of the icmp struct ##########//
 
     icmphdr.icmp_type = ICMP_ECHO;
-    icmphdr.icmp_code = 8;
+    icmphdr.icmp_code = 0;
     icmphdr.icmp_id = 18;
     icmphdr.icmp_seq = 0;
     icmphdr.icmp_cksum = 0;
@@ -67,8 +67,75 @@ int main()
     struct timeval start, end;
     gettimeofday(&start, 0);
 
+     // Send the packet using sendto() for sending datagrams.
+    int bytes_sent = sendto(sock, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *)&dest_in, sizeof(dest_in));
+    if (bytes_sent == -1)
+    {
+        fprintf(stderr, "sendto() failed with error: %d", errno);
+        return -1;
+    }
+    printf("Successfuly sent one packet : ICMP HEADER : %d bytes, data length : %d , icmp header : %d \n", bytes_sent, datalen, ICMP_HDRLEN);
 
+    // Get the ping response
+    bzero(packet, IP_MAXPACKET);
+    socklen_t len = sizeof(dest_in);
+    ssize_t bytes_received = -1;
+    while ((bytes_received = recvfrom(sock, packet, sizeof(packet), 0, (struct sockaddr *)&dest_in, &len)))
+    {
+        if (bytes_received > 0)
+        {
+            // Check the IP header
+            struct iphdr *iphdr = (struct iphdr *)packet;
+            struct icmphdr *icmphdr = (struct icmphdr *)(packet + (iphdr->ihl * 4));
+            // printf("%ld bytes from %s\n", bytes_received, inet_ntoa(dest_in.sin_addr));
+            // icmphdr->type
 
+            printf("Successfuly received one packet with %d bytes : data length : %d , icmp header : %d , ip header : %d \n", bytes_received, datalen, ICMP_HDRLEN, IP4_HDRLEN);
 
+            break;
+        }
+    }
 
+    gettimeofday(&end, 0);
+
+        char reply[IP_MAXPACKET];
+    memcpy(reply, packet + ICMP_HDRLEN + IP4_HDRLEN, datalen);
+    // printf("ICMP reply: %s \n", reply);
+
+    float milliseconds = (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f;
+    unsigned long microseconds = (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec);
+    printf("\nRTT: %f milliseconds (%ld microseconds)\n", milliseconds, microseconds);
+
+    // Close the raw socket descriptor.
+    close(sock);
+
+    return 0;
+}
+
+    // Compute checksum (RFC 1071).
+unsigned short calculate_checksum(unsigned short *paddress, int len)
+{
+    int nleft = len;
+    int sum = 0;
+    unsigned short *w = paddress;
+    unsigned short answer = 0;
+
+    while (nleft > 1)
+    {
+        sum += *w++;
+        nleft -= 2;
+    }
+
+    if (nleft == 1)
+    {
+        *((unsigned char *)&answer) = *((unsigned char *)w);
+        sum += answer;
+    }
+
+    // add back carry outs from top 16 bits to low 16 bits
+    sum = (sum >> 16) + (sum & 0xffff); // add hi 16 to low 16
+    sum += (sum >> 16);                 // add carry
+    answer = ~sum;                      // truncate to 16 bits
+
+    return answer;
 }
