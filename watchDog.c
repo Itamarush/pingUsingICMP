@@ -11,9 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <mqueue.h>
+#include <signal.h>
 
 int main()
-{
+{   
+    printf("im the Watchdog");
     int server_sock = socket(AF_INET, SOCK_STREAM, 0); 
     char buffer[1];
     struct timeval currentFirstTime ,lastFirstTime;
@@ -31,7 +33,7 @@ int main()
     memset(&serverAddress,0, sizeof(serverAddress)); // zerod the last 8 bits so it will match the suckaddr struct
 
     serverAddress.sin_family = AF_INET; // value = AF_INET. match to the sa_family of suckaddr struct
-    serverAddress.sin_port = htons(3000); // switch from host byte order to network(Big endian) byte order.
+    serverAddress.sin_port = htons(3008); // switch from host byte order to network(Big endian) byte order.
     int convert = inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr);
 	if (convert <= 0)
 	{
@@ -43,11 +45,12 @@ int main()
     if (bindNum == -1)
     {
         printf("Could not bind\n");
+        perror("Error binding socket");
         exit(1);
     }
     else if (bindNum == 0)
     {
-        printf("Binding succesfully to port number: %d\n", 200000);
+        printf("Binding succesfully to port number: %d\n", 20000);
     }
 
     if (listen(server_sock, 400) == -1)
@@ -91,11 +94,13 @@ int main()
         {
             i++;
             sleep(1); 
-            recieve2 = mq_receive(clientSocket, buffer, sizeof(buffer), 0);
+            recv(clientSocket, buffer, sizeof(buffer), MSG_DONTWAIT);
             if (i == 10)
             {
                 "break";
-                stay = 1;
+                stay = 0;
+                kill(0, SIGKILL);
+
             }
         }
     }
