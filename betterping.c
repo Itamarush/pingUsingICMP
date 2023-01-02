@@ -22,6 +22,43 @@ float time_diff(struct timeval *start, struct timeval *end);
 
 int main(int argc, char *argv[])
 {
+
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1)
+    {
+        printf("Could not create socket\n");       // Vailidation of the Socket creations..
+    }
+    else if (sockfd == 0)
+    {
+        printf("Created socket succesfully\n");
+    }
+
+    struct sockaddr_in serverAddress; // new struct decleration of sockaddr_in type
+    struct sockaddr_in * pserver_addr = &serverAddress; // Pointer Decleration
+    memset(&serverAddress,0, sizeof(serverAddress)); // zerod the last 8 bits so it will match the suckaddr struct
+
+    serverAddress.sin_family = AF_INET; // value = AF_INET. match to the sa_family of suckaddr struct
+    serverAddress.sin_port = htons(3000); // switch from host byte order to network(Big endian) byte order.
+    int convert = inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr); // converting the IPv4 from text to binary
+	if (convert <= 0)                                                       // Checking if the conversion worked
+	{
+		printf("inet_pton() failed\n"); 
+		return -1;
+	}
+    
+    //### CONNECTING TO THE SERVER ###///
+
+    int sockcon = connect(sockfd, (struct sockaddr *) &serverAddress, sizeof(serverAddress)); 
+
+      if (sockcon == -1)                                                                      // Vailidation of the connections between
+    {                                                                                         //  theserver      
+        printf("connect() failed with error code\n\n");
+    }
+    else if (sockcon == 0)
+    {
+        printf("Connected to server succesfully!\n\n");
+    }
+
     struct icmp icmphdr; // ICMP-header
     char data[IP_MAXPACKET] = "This is the ping.\n";
 
@@ -57,8 +94,8 @@ int main(int argc, char *argv[])
     inet_pton(AF_INET, DESTINATION_IP, &(dest_in.sin_addr.s_addr));
 
     // Create raw socket for IP-RAW (make IP-header by yourself)
-    int sock = -1;
-    if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1)
+    int sockPing = -1;
+    if ((sockPing = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1)
     {
         fprintf(stderr, "socket() failed with error: %d", errno);
         fprintf(stderr, "To create a raw socket, the process needs to be run by Admin/root user.\n\n");
@@ -92,10 +129,11 @@ int main(int argc, char *argv[])
     // dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
     dest_in.sin_addr.s_addr = inet_addr(DESTINATION_IP);
     inet_pton(AF_INET, DESTINATION_IP, &(dest_in.sin_addr.s_addr));
-        gettimeofday(&start, 0);
+    gettimeofday(&start, 0);
 
-        // Send the packet using sendto() for sending datagrams.
-        int bytes_sent = sendto(sock, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *)&dest_in, sizeof(dest_in));
+    // Send the packet using sendto() for sending datagrams.
+    int bytes_sent = sendto(sockPing, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *)&dest_in, sizeof(dest_in));
+    send(sockfd, "1", 1, 0);
         if (bytes_sent == -1)
         {
             fprintf(stderr, "sendto() failed with error: %d", errno);
@@ -107,10 +145,11 @@ int main(int argc, char *argv[])
         bzero(packet, IP_MAXPACKET);
         socklen_t len = sizeof(dest_in);
         ssize_t bytes_received = -1;
-        while ((bytes_received = recvfrom(sock, packet, sizeof(packet), 0, (struct sockaddr *)&dest_in, &len)))
+        while ((bytes_received = recvfrom(sockPing, packet, sizeof(packet), 0, (struct sockaddr *)&dest_in, &len)))
         {
             if (bytes_received > 0)
             {
+                send(sockfd, "0", 1, 0);
                 // Check the IP header
                 struct iphdr *iphdr = (struct iphdr *)packet;
                 struct icmphdr *icmphdr = (struct icmphdr *)(packet + (iphdr->ihl * 4));
@@ -126,12 +165,13 @@ int main(int argc, char *argv[])
         gettimeofday(&end, 0);
         char reply[IP_MAXPACKET];
         memcpy(reply, packet + ICMP_HDRLEN + IP4_HDRLEN, datalen);
-        printf("%d bytes from %s: icmp_seq=%d time=%f\n", bytes_received, inet_ntoa(dest_in.sin_addr), counter, time_diff(&start, &end));
+        printf("%ld bytes from %s: icmp_seq=%d time=%f\n", bytes_received, inet_ntoa(dest_in.sin_addr), counter, time_diff(&start, &end));
         counter++;
     }
 
     // Close the raw socket descriptor.
-    close(sock);
+    close(sockfd);
+    close(sockPing);
 
     return 0;
 }
