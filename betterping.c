@@ -156,7 +156,11 @@ int main(int argc, char *argv[])
                 }
             if(timeCounter == 10)
             {
-                sleep(10.5);
+                sleep(8);
+            }
+            if(timeCounter == 30)
+            {
+                sleep(12);
             }
             // printf("Successfuly sent one packet : ICMP HEADER : %d bytes, data length : %d , icmp header : %d \n", bytes_sent, datalen, ICMP_HDRLEN);
             // Get the ping response

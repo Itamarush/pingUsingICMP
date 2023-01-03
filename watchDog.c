@@ -18,7 +18,6 @@ int main()
     printf("im the Watchdog");
     int server_sock = socket(AF_INET, SOCK_STREAM, 0); 
     char buffer[1];
-    struct timeval currentFirstTime ,lastFirstTime;
     
     if (server_sock < 0)
     {
@@ -76,32 +75,34 @@ int main()
     	}
     	    printf("A new client connection accepted\n");
 
-    int i = 0;
-    int recieve2;
-    int stay = 1;
-    while(stay == 1)
+    struct timeval currentFirstTime ,lastFirstTime;
+    gettimeofday(&currentFirstTime, 0);
+
+    int get = 0; //var which save if the better_ping got pong
+    int isOK = 1; // var which sent to the better_ping "you can sent a ping"
+    int sent = 0; // var will contain the
+    int recieve = 1; 
+    float milliseconds = 0;
+
+    gettimeofday(&lastFirstTime, 0);
+    
+    while ( recieve > 0)
     {
-        printf("a");
-        int recieve1 = recv(clientSocket, buffer, sizeof(buffer), 0);
-        printf("b");
-        if (buffer[0] == '1')
-        {
-            printf("here!");        
-            // gettimeofday(&currentFirstTime, NULL);
+        sent = send (clientSocket, &isOK ,sizeof(isOK), 0);
+
+        if (get == 1){
+            //save the time the better_ping send "i got a pong" so the timer will restart 
+            gettimeofday(&currentFirstTime, 0);
         }
 
-        while (i != 10)
+        //while we didnt get any message from the better_ping and the timer didnt got to 10 try to recv
+        recieve = 0;
+        while (((milliseconds = (lastFirstTime.tv_sec - currentFirstTime.tv_sec) * 1000.0f + (lastFirstTime.tv_usec - currentFirstTime.tv_usec) / 1000.0f) < 10000) && recieve <= 0)
         {
-            i++;
-            sleep(1); 
-            recv(clientSocket, buffer, sizeof(buffer), MSG_DONTWAIT);
-            if (i == 10)
-            {
-                "break";
-                stay = 0;
-                kill(0, SIGKILL);
-
-            }
+            recieve = recv(clientSocket, &get, sizeof(get), MSG_DONTWAIT); 
+            gettimeofday(&lastFirstTime, 0);
         }
+
+
     }
 }
