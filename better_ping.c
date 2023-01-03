@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
         }
 
         struct sockaddr_in serverAddress; // new struct decleration of sockaddr_in type
-        struct sockaddr_in * pserver_addr = &serverAddress; // Pointer Decleration
         memset(&serverAddress,0, sizeof(serverAddress)); // zerod the last 8 bits so it will match the suckaddr struct
 
         serverAddress.sin_family = AF_INET; // value = AF_INET. match to the sa_family of suckaddr struct
@@ -116,7 +115,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "To create a raw socket, the process needs to be run by Admin/root user.\n\n");
             return -1;
         }
-        int counter = 0;
+        int counter = 1;
         struct timeval start, end;
         
         while (1)
@@ -173,8 +172,6 @@ int main(int argc, char *argv[])
                 {
                     send(sockfd, "0", 1, 0);
                     // Check the IP header
-                    struct iphdr *iphdr = (struct iphdr *)packet;
-                    struct icmphdr *icmphdr = (struct icmphdr *)(packet + (iphdr->ihl * 4));
                     // printf("%ld bytes from %s\n", bytes_received, inet_ntoa(dest_in.sin_addr));
                     // icmphdr->type
 
@@ -183,7 +180,6 @@ int main(int argc, char *argv[])
                     break;
                 }
             }
-            int x = IP_RECVTTL;
             gettimeofday(&end, 0);
             char reply[IP_MAXPACKET];
             memcpy(reply, packet + ICMP_HDRLEN + IP4_HDRLEN, datalen);

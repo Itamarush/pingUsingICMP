@@ -17,7 +17,6 @@ int main()
 {   
     printf("im the Watchdog");
     int server_sock = socket(AF_INET, SOCK_STREAM, 0); 
-    char buffer[1];
     
     if (server_sock < 0)
     {
@@ -28,7 +27,6 @@ int main()
     
 
     struct sockaddr_in serverAddress; // new struct decleration of sockaddr_in type
-    struct sockaddr_in * pserver_addr = &serverAddress; // Pointer Decleration
     memset(&serverAddress,0, sizeof(serverAddress)); // zerod the last 8 bits so it will match the suckaddr struct
 
     serverAddress.sin_family = AF_INET; // value = AF_INET. match to the sa_family of suckaddr struct
@@ -78,28 +76,24 @@ int main()
     struct timeval currentFirstTime ,lastFirstTime;
     gettimeofday(&currentFirstTime, 0);
 
-    int get = 0; //var which save if the better_ping got pong
-    int isOK = 1; // var which sent to the better_ping "you can sent a ping"
-    int sent = 0; // var will contain the
+    int recievedPong = 0;
     int recieve = 1; 
-    float milliseconds = 0;
+    float timeDetermine = 0;
 
     gettimeofday(&lastFirstTime, 0);
     
     while ( recieve > 0)
     {
-        sent = send (clientSocket, &isOK ,sizeof(isOK), 0);
+        send (clientSocket, (int*)(1) ,1, 0);
 
-        if (get == 1){
-            //save the time the better_ping send "i got a pong" so the timer will restart 
+        if (recievedPong == 1){
             gettimeofday(&currentFirstTime, 0);
         }
 
-        //while we didnt get any message from the better_ping and the timer didnt got to 10 try to recv
         recieve = 0;
-        while (((milliseconds = (lastFirstTime.tv_sec - currentFirstTime.tv_sec) * 1000.0f + (lastFirstTime.tv_usec - currentFirstTime.tv_usec) / 1000.0f) < 10000) && recieve <= 0)
+        while (((timeDetermine = (lastFirstTime.tv_sec - currentFirstTime.tv_sec) * 1000.0f + (lastFirstTime.tv_usec - currentFirstTime.tv_usec) / 1000.0f) < 10000) && recieve <= 0)
         {
-            recieve = recv(clientSocket, &get, sizeof(get), MSG_DONTWAIT); 
+            recieve = recv(clientSocket, &recievedPong, sizeof(recievedPong), MSG_DONTWAIT); 
             gettimeofday(&lastFirstTime, 0);
         }
 
