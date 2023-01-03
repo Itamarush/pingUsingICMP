@@ -5,12 +5,13 @@ watchdog.o: watchdog.c
 	gcc -Wall -c watchdog.c
 
 ping.o: ping.c
-	gcc -Wall -c ping.c
+	gcc -Wall -c  ping.c
 
 parta: ping.o
 	gcc -Wall -o parta ping.o
 
 partb: better_ping.o watchdog.o
+	gcc -o watchdog watchdog.c
 	gcc -Wall -o partb better_ping.o
 
 all: parta partb
@@ -18,4 +19,4 @@ all: parta partb
 .PHONY: clean all
 
 clean:
-	rm -f *.o *.out parta partb watchdog *.gch
+	rm -f *.o *.out parta partb watchdog *.gch a
