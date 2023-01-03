@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
             gettimeofday(&end, 0);
             char reply[IP_MAXPACKET];
             memcpy(reply, packet + ICMP_HDRLEN + IP4_HDRLEN, datalen);
-            printf("%ld bytes from %s: icmp_seq=%d time=%f\n", bytes_received, inet_ntoa(dest_in.sin_addr), counter, time_diff(&start, &end));
+            printf("%ld bytes from %s: icmp_seq=%d time=%f\n", bytes_received, argv[1], counter, time_diff(&start, &end));
             counter++;
         }
 
